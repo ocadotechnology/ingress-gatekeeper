@@ -1,0 +1,215 @@
+[
+  {
+    "cpuPlatform": "Intel Sandy Bridge",
+    "creationTimestamp": "2018-06-28T10:29:23.752-07:00",
+    "deletionProtection": false,
+    "disks": [
+      {
+        "autoDelete": true,
+        "boot": true,
+        "deviceName": "boot",
+        "guestOsFeatures": [
+          {
+            "type": "VIRTIO_SCSI_MULTIQUEUE"
+          }
+        ],
+        "index": 0,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "licenses": [
+          "https://www.googleapis.com/compute/v1/projects/coreos-cloud/global/licenses/coreos-beta"
+        ],
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/main-dmzkubernetes-cr0-1-1530206947-rootdisk",
+        "type": "PERSISTENT"
+      }
+    ],
+    "id": "7065363436298347549",
+    "kind": "compute#instance",
+    "labelFingerprint": "s2daa21rJ7A=",
+    "labels": {
+      "goog-dm": "main-dmzkubernetes-cr0-1-1530206947"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/machineTypes/n1-standard-4",
+    "name": "main-kubernetes-cr0-1-1530204942",
+    "networkInterfaces": [
+      {
+        "accessConfigs": [
+          {
+            "kind": "compute#accessConfig",
+            "name": "External NAT",
+            "natIP": "104.199.71.226",
+            "type": "ONE_TO_ONE_NAT"
+          }
+        ],
+        "fingerprint": "Cg4i3IsAouo=",
+        "kind": "compute#networkInterface",
+        "name": "nic0",
+        "network": "https://www.googleapis.com/compute/v1/projects/project1/global/networks/default",
+        "networkIP": "10.188.8.14",
+        "subnetwork": "https://www.googleapis.com/compute/v1/projects/project1/regions/europe-west1/subnetworks/default-primary-dynamic-subnetwork"
+      }
+    ],
+    "scheduling": {
+      "automaticRestart": true,
+      "onHostMaintenance": "MIGRATE",
+      "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/instances/main-dmzkubernetes-cr0-1-1530206947",
+    "serviceAccounts": [
+      {
+        "email": "kubernetesclusterdmz@project1.iam.gserviceaccount.com",
+        "scopes": [
+          "https://www.googleapis.com/auth/cloud-platform"
+        ]
+      }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+      "fingerprint": "HR0TOUJDxkU=",
+      "items": [
+        "main-dmzkubernetes"
+      ]
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b"
+  },
+  {
+    "cpuPlatform": "Intel Sandy Bridge",
+    "creationTimestamp": "2018-06-13T03:10:41.881-07:00",
+    "deletionProtection": false,
+    "disks": [
+      {
+        "autoDelete": true,
+        "boot": true,
+        "deviceName": "boot",
+        "guestOsFeatures": [
+          {
+            "type": "VIRTIO_SCSI_MULTIQUEUE"
+          }
+        ],
+        "index": 0,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "licenses": [
+          "https://www.googleapis.com/compute/v1/projects/coreos-cloud/global/licenses/coreos-beta"
+        ],
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/main-etcd-cr0-1-rootdisk",
+        "type": "PERSISTENT"
+      }
+    ],
+    "id": "1774716343334818639",
+    "kind": "compute#instance",
+    "labelFingerprint": "PFEhp_GeazI=",
+    "labels": {
+      "goog-dm": "main-etcd-cr0-1"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/machineTypes/n1-standard-4",
+    "creationTimestamp": "2018-06-28T09:56:01.087-07:00",
+    "deletionProtection": false,
+    "disks": [
+      {
+        "autoDelete": true,
+        "boot": true,
+        "deviceName": "boot",
+        "guestOsFeatures": [
+          {
+            "type": "VIRTIO_SCSI_MULTIQUEUE"
+          }
+        ],
+        "index": 0,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "licenses": [
+          "https://www.googleapis.com/compute/v1/projects/coreos-cloud/global/licenses/coreos-beta"
+        ],
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/main-kubernetes-cr0-1-1530204942-rootdisk",
+        "type": "PERSISTENT"
+      },
+      {
+        "autoDelete": false,
+        "boot": false,
+        "deviceName": "kubernetes-dynamic-pvc-8213900d-695e-11e8-a2b9-42010abc0806",
+        "index": 2,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/kubernetes-dynamic-pvc-8213900d-695e-11e8-a2b9-42010abc0806",
+        "type": "PERSISTENT"
+      },
+      {
+        "autoDelete": false,
+        "boot": false,
+        "deviceName": "kubernetes-dynamic-pvc-825998ca-695e-11e8-a2b9-42010abc0806",
+        "index": 3,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/kubernetes-dynamic-pvc-825998ca-695e-11e8-a2b9-42010abc0806",
+        "type": "PERSISTENT"
+      },
+      {
+        "autoDelete": false,
+        "boot": false,
+        "deviceName": "kubernetes-dynamic-pvc-89116f05-793c-11e8-8019-42010abc080c",
+        "index": 1,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/disks/kubernetes-dynamic-pvc-89116f05-793c-11e8-8019-42010abc080c",
+        "type": "PERSISTENT"
+      }
+    ],
+    "id": "732225504540143055",
+    "kind": "compute#instance",
+    "labelFingerprint": "TcPnGWMWW9Y=",
+    "labels": {
+      "goog-dm": "main-kubernetes-cr0-1-1530204942"
+    },
+    "machineType": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/machineTypes/n1-standard-4",
+    "name": "main-kubernetes-cr0-1-1530204942",
+    "networkInterfaces": [
+      {
+        "accessConfigs": [
+          {
+            "kind": "compute#accessConfig",
+            "name": "External NAT",
+            "natIP": "35.205.60.205",
+            "type": "ONE_TO_ONE_NAT"
+          }
+        ],
+        "fingerprint": "MvVSzfZCqYs=",
+        "kind": "compute#networkInterface",
+        "name": "nic0",
+        "network": "https://www.googleapis.com/compute/v1/projects/project1/global/networks/default",
+        "networkIP": "10.188.8.5",
+        "subnetwork": "https://www.googleapis.com/compute/v1/projects/project1/regions/europe-west1/subnetworks/default-primary-dynamic-subnetwork"
+      }
+    ],
+    "scheduling": {
+      "automaticRestart": true,
+      "onHostMaintenance": "MIGRATE",
+      "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b/instances/main-kubernetes-cr0-1-1530204942",
+    "serviceAccounts": [
+      {
+        "email": "kubernetescluster@project1.iam.gserviceaccount.com",
+        "scopes": [
+          "https://www.googleapis.com/auth/cloud-platform"
+        ]
+      }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+      "fingerprint": "4EHrgqPVy1A=",
+      "items": [
+        "main-kubernetes"
+      ]
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/project1/zones/europe-west1-b"
+  }
+]

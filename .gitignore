@@ -1,0 +1,8 @@
+dynamic
+static
+current
+existing
+secret.yaml
+*.json
+!ingress.json
+!gcloud-instances.json
