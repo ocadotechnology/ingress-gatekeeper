@@ -52,7 +52,8 @@ T_build_annotation_patch() {
 T_space_sep_to_nl(){
   local result="$(cat test/space_sep.txt | space_sep_to_nl)"
   [[ "$result" == "thing1
-thing2" ]]
+thing2
+thing3" ]]
 }
 
 T_nl_sep_to_comma() {
