@@ -18,7 +18,7 @@ build_annotation_patch() {
 
 space_sep_to_nl() {
   declare desc="take space separated list and replace spaces with /n"
-  sed 's_ _\n_'
+  sed 's_ _\n_g'
 }
 
 nl_sep_to_comma() {
@@ -52,7 +52,8 @@ T_build_annotation_patch() {
 T_space_sep_to_nl(){
   local result="$(cat test/space_sep.txt | space_sep_to_nl)"
   [[ "$result" == "thing1
-thing2" ]]
+thing2
+thing3" ]]
 }
 
 T_nl_sep_to_comma() {
