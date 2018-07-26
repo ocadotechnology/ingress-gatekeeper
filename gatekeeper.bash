@@ -18,7 +18,7 @@ build_annotation_patch() {
 
 space_sep_to_nl() {
   declare desc="take space separated list and replace spaces with /n"
-  sed 's_ _\n_'
+  sed 's_ _\n_g'
 }
 
 nl_sep_to_comma() {
