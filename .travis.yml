@@ -1,0 +1,24 @@
+language: go
+go:
+- '1.10'
+sudo: required
+services:
+- docker
+env:
+  global:
+  - REGISTRY_USER=ocadotechnologygitlab
+  - VCS_SOURCE="https://github.com/${TRAVIS_REPO_SLUG}"
+  - secure: "CXN9hp2RdDv9FhiENAhlGO4VbDFCqlDBXaWG67NBjzXig6fRpU7E3RiXdZPz7iSCSN2ALPF5F5UHWqx102eUoPliLO6ytFH2BBXggiDiyAa95d8KJ7iNLE7hhzQfpLfNAtX74xdYHmHfgayT2qLE2rtEGAlCxwoFFi+SnQaFYHpjMAu8x2sScruii8uUcCFAs7YpW/7pGGKUeto9G0YBl9kh9okqRQ+GZOTVnhtqbHJHRLWJmwkBILRctDCpu9/DyZQVNP+8uysuohFRUG1STjSa0gjpP1jycnD6MoGovRZQ8ityK2eprzVXLdPLp2Bee1xutRvwe2ssObkBOBQuMbMARiRf0OjIYveZf5sZF8y2GOuVwL14yApo346+m6Bq5rgJCLh11QsnOtco9/MY+gXcfM4bitZQHyoAUu+ak96ZrCAlRvYOjnxIaA82t/jMkLjQiZC+Ja2zzL+sl+manUlvOwrySvsdJ0RrH609TuWvktZJwBVjsNS36LpOAHhEdxK+Iry9eO3jgLUzhqsO69atANIehulyhkzSAcXNLS3Bj27BjSyXsZ+QUNuj9pTxBou7YnnqWC4CkOEn7Bjp0W4recbxTT8b5xu+TofVTdRFC9tcINidxvFSvuXOGP9XICgmgLf2i0l3iNKrDTMDI0YWJNjGEAy5VGbj7XuQ54E="
+install:
+- go get github.com/progrium/basht
+script:
+- basht ./gatekeeper.bash
+- ./.travis/docker-build.sh
+after_script:
+- docker images
+deploy:
+  provider: script
+  script: ./.travis/docker-push.sh
+  on:
+    branch: master
+    tags: true

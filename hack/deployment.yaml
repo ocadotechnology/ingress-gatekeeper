@@ -1,0 +1,97 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-ingress
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: test-ingress
+spec:
+  rules:
+  - host: test-ingress.public.cluster.local
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gatekeeper
+  namespace: test-ingress
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: gatekeeper
+  namespace: test-ingress
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: gatekeeper
+  namespace: test-ingress
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: gatekeeper
+subjects:
+- kind: ServiceAccount
+  name: gatekeeper
+  namespace: test-ingress
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: gatekeeper
+  namespace: test-ingress
+  labels:
+    app: test-ingress
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: test-ingress
+    spec:
+      volumes:
+      - name: auth-json
+        secret:
+          secretName: test-ingress
+      containers:
+      - name: gatekeeper
+        image: ocadotechnology/ingress-gatekeeper:0.1
+        imagePullPolicy: Always
+        command:
+        - ./gatekeeper.bash
+        env:
+        - name: GCP_PROJECT_IDS
+          value: kubernetes-development
+        - name: INGRESS_NAMES
+          value: test-ingress
+        - name: STATIC_IP_RANGES
+          value: "192.168.0.0/24 192.168.5.0/24"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 20m
+            memory: 500Mi
+        volumeMounts:
+        - name: auth-json
+          mountPath: /creds
+      serviceAccountName: gatekeeper
