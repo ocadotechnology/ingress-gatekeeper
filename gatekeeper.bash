@@ -26,6 +26,22 @@ nl_sep_to_comma() {
   sort | uniq | sed -e '/^$/d' -e 's|$|,|' | tr '\n' ' ' | head -c -2
 }
 
+drop_invalid_ips() {
+  declare desc="Get a list of newline separated ip ranges, drop invalid ones \n and return curated list"
+  sed -r '/^(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]|[1-9]?[0-9]))(\/([8-9]|[1-2][0-9]|3[0-2]))([^0-9.]|$)/!d'
+}
+
+build_valid_ip_list() {
+  declare desc="Get newline separated list of IPs, validated them and build a comma\n separated list"
+  drop_invalid_ips | nl_sep_to_comma 
+}
+
+T_drop_invalid_ips() {
+  local result="$(cat test/list_with_invalid_cidr | drop_invalid_ips)"
+  [[ "$result" == "104.199.71.226/32
+35.205.60.205/32" ]]
+}
+
 T_get_gcp_external_ip_ranges() {
   local result="$(cat test/gcloud-instances.json | get_gcp_external_ip_ranges)"
   [[ "$result" == "104.199.71.226/32
@@ -61,6 +77,11 @@ T_nl_sep_to_comma() {
   [[ "$result" == "line1, line2" ]]
 }
 
+T_build_valid_ip_list() {
+  local result="$(cat test/list_with_invalid_cidr | build_valid_ip_list)"
+  [[ "$result" == "104.199.71.226/32, 35.205.60.205/32" ]]
+}
+
 loop() {
 
   local static_ranges="$1"
@@ -92,7 +113,7 @@ loop() {
     cat $static
 
     # build annotation string with sorted ips and static list
-    cat $static $dynamic | nl_sep_to_comma > $current
+    cat $static $dynamic | build_valid_ip_list > $current
 
     echo "Combined sorted list of IP ranges to whitelist: "
     cat $current
