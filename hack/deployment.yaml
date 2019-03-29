@@ -4,14 +4,22 @@ kind: Namespace
 metadata:
   name: test-ingress
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
 metadata:
-  name: test-ingress
-  namespace: test-ingress
+  name: listcheckers.config.istio.io
 spec:
-  rules:
-  - host: test-ingress.public.cluster.local
+  group: config.istio.io
+  names:
+    categories:
+    - istio-io
+    - policy-istio-io
+    kind: listchecker
+    listKind: listcheckerList
+    plural: listcheckers
+    singular: listchecker
+  scope: Namespaced
+  version: v1alpha2
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -26,14 +34,16 @@ metadata:
   namespace: test-ingress
 rules:
 - apiGroups:
-  - extensions
+  - config.istio.io
   resources:
-  - ingresses
+  - listcheckers
   verbs:
   - get
   - list
   - watch
   - patch
+  - create
+  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
@@ -48,6 +58,30 @@ subjects:
 - kind: ServiceAccount
   name: gatekeeper
   namespace: test-ingress
+---
+apiVersion: config.istio.io/v1alpha2
+kind: listchecker
+metadata:
+  name: whitelist-1
+  namespace: test-ingress
+spec:
+  blacklist: false
+  entryType: IP_ADDRESSES
+  overrides:
+  - 157.25.96.24/29
+  - 185.53.133.80/29
+---
+apiVersion: config.istio.io/v1alpha2
+kind: listchecker
+metadata:
+  name: whitelist-2
+  namespace: test-ingress
+spec:
+  blacklist: false
+  entryType: IP_ADDRESSES
+  overrides:
+  - 157.25.96.25/29
+  - 185.53.133.81/29
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -73,17 +107,17 @@ spec:
           secretName: test-ingress
       containers:
       - name: gatekeeper
-        image: ocadotechnology/ingress-gatekeeper:0.1
+        image: ocadotechnology/ingress-gatekeeper:2.0.0
         imagePullPolicy: Always
         command:
         - ./gatekeeper.bash
         env:
         - name: GCP_PROJECT_IDS
           value: kubernetes-development
-        - name: INGRESS_NAMES
-          value: test-ingress
-        - name: STATIC_IP_RANGES
-          value: "192.168.0.0/24 192.168.5.0/24"
+        - name: SOURCE_LISTCHECKER_NAMES
+          value: "whitelist-1 whitelist-2"
+        - name: DEST_LISTCHECKER_NAME
+          value: "whitelist-final"
         resources:
           limits:
             cpu: 500m

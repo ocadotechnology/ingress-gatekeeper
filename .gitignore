@@ -3,6 +3,6 @@ static
 current
 existing
 secret.yaml
-*.json
-!ingress.json
+*.json # to avoid accidental gcp credential commit
 !gcloud-instances.json
+!listchecker-ips.json
