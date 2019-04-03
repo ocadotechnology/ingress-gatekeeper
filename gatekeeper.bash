@@ -1,29 +1,24 @@
 #!/usr/bin/env bash
 
-get_gcp_external_ip_ranges() {
-  declare desc="take json output of 'gcloud compute instances list' and parse out the external IPs adding /32 to each"
-  jq '.[] | .networkInterfaces[0].accessConfigs[0].natIP' -r | sed 's_$_/32_'
+get_gcp_external_ips() {
+  declare desc="take json output of 'gcloud compute instances list' and parse out the external IPs"
+  jq '.[] | .networkInterfaces[0].accessConfigs[0].natIP' -r
 }
 
-get_whitelist_annotation_ranges() {
-  declare desc="take json output of 'kubectl get ingress ingress_name' and parse out the whitelist ranges"
-  jq '.metadata.annotations["nginx.ingress.kubernetes.io/whitelist-source-range"]' -r | head -c -1
+get_listchecker_ips() {
+  declare desc="take json output of istio listchecker and output ips"
+  jq '.spec.overrides[]' -r
 }
 
-build_annotation_patch() {
-  declare desc="build ingress annotation patch json from list of ranges"
-  local whitelist_source_range="$1"
-  jq -n --arg wsr "$whitelist_source_range" '{metadata: {annotations: {"nginx.ingress.kubernetes.io/whitelist-source-range": $wsr, "ingress.kubernetes.io/whitelist-source-range": $wsr}}}'
+make_ip_range() {
+  declare desc="output list of ip ranges where plain ips are provided"
+  sed -e '/\/[0-9][0-9]*$/!s/$/\/32/'
 }
 
-space_sep_to_nl() {
-  declare desc="take space separated list and replace spaces with /n"
-  sed 's_ _\n_g'
-}
-
-nl_sep_to_comma() {
-  declare desc="take new line separated list, remove empty lines, sort, then replace /n with comma"
-  sort | uniq | sed -e '/^$/d' -e 's|$|,|' | tr '\n' ' ' | head -c -2
+build_listchecker() {
+  declare desc="create an istio listchecker whitelist object with a json list of ips"
+  local listchecker_name="$1"
+  jq --arg name "$listchecker_name" '{apiVersion: "config.istio.io/v1alpha2", kind: "listchecker", metadata: {name: $name}, spec: {blacklist: false, entryType: "IP_ADDRESSES", overrides: .}}'
 }
 
 drop_invalid_ips() {
@@ -32,66 +27,85 @@ drop_invalid_ips() {
 }
 
 build_valid_ip_list() {
-  declare desc="Get newline separated list of IPs, validated them and build a comma\n separated list"
-  drop_invalid_ips | nl_sep_to_comma 
+  declare desc="Get newline separated list of IPs, validated them and build a json list"
+  drop_invalid_ips | sort | uniq
+}
+
+to_json_array() {
+  declare desc="turn newline separate list to json array"
+  jq -ncR '[inputs]' -r
+}
+
+T_make_ip_range() {
+  local result="$(cat test/list_with_invalid_cidr | make_ip_range)"
+  [[ "$result" == "104.199.71.226/32
+35.205.60.205/32
+null/32
+notanip/32
+10.0.0.0.0/24
+127.0.0.1/32
+0.0.0.0/8" ]]
 }
 
 T_drop_invalid_ips() {
   local result="$(cat test/list_with_invalid_cidr | drop_invalid_ips)"
   [[ "$result" == "104.199.71.226/32
-35.205.60.205/32" ]]
+35.205.60.205/32
+0.0.0.0/8" ]]
 }
 
-T_get_gcp_external_ip_ranges() {
-  local result="$(cat test/gcloud-instances.json | get_gcp_external_ip_ranges)"
-  [[ "$result" == "104.199.71.226/32
-35.205.60.205/32" ]]
+T_get_gcp_external_ips() {
+  local result="$(cat test/gcloud-instances.json | get_gcp_external_ips)"
+  [[ "$result" == "104.199.71.226
+35.205.60.205" ]]
 }
 
-T_get_whitelist_annotation_ranges() {
-  local result="$(cat test/ingress.json | get_whitelist_annotation_ranges)"
-  [[ "$result" == "192.168.0.0/24, 192.168.5.0/24, 35.205.194.164/32, 35.233.113.241/32" ]]
-}
-
-T_build_annotation_patch() {
-  local result="$(build_annotation_patch '192.168.0.0/24')"
-  [[ "$result" == '{
-  "metadata": {
-    "annotations": {
-      "nginx.ingress.kubernetes.io/whitelist-source-range": "192.168.0.0/24",
-      "ingress.kubernetes.io/whitelist-source-range": "192.168.0.0/24"
-    }
-  }
-}' ]]
-}
-
-T_space_sep_to_nl(){
-  local result="$(cat test/space_sep.txt | space_sep_to_nl)"
-  [[ "$result" == "thing1
-thing2
-thing3" ]]
-}
-
-T_nl_sep_to_comma() {
-  local result="$(cat test/nl_sep.txt | nl_sep_to_comma)"
-  [[ "$result" == "line1, line2" ]]
+T_get_listchecker_ips() {
+  local result="$(cat test/listchecker-ips.json | get_listchecker_ips)"
+  [[ "$result" == "104.199.71.226
+35.205.60.205" ]]
 }
 
 T_build_valid_ip_list() {
   local result="$(cat test/list_with_invalid_cidr | build_valid_ip_list)"
-  [[ "$result" == "104.199.71.226/32, 35.205.60.205/32" ]]
+  [[ "$result" == "0.0.0.0/8
+104.199.71.226/32
+35.205.60.205/32" ]]
+}
+
+T_to_json_array() {
+  local result="$(cat test/list_with_invalid_cidr | to_json_array)"
+  [[ "$result" == '["104.199.71.226/32","35.205.60.205/32","null/32","notanip","10.0.0.0.0/24","127.0.0.1","0.0.0.0/8"]' ]]
+}
+
+T_build_listchecker() {
+  local result="$(echo '["foo","bar"]' | build_listchecker foobar)"
+  [[ "$result" == '{
+  "apiVersion": "config.istio.io/v1alpha2",
+  "kind": "listchecker",
+  "metadata": {
+    "name": "foobar"
+  },
+  "spec": {
+    "blacklist": false,
+    "entryType": "IP_ADDRESSES",
+    "overrides": [
+      "foo",
+      "bar"
+    ]
+  }
+}' ]]
 }
 
 loop() {
 
-  local static_ranges="$1"
+  local source_listcheckers="$1"
   local gcp_project_list="$2"
-  local ingress_names="$3"
+  local dest_listchecker="$3"
 
   readonly dynamic="/tmp/dynamic"
   readonly static="/tmp/static"
   readonly current="/tmp/current"
-  readonly existing="/tmp/existing"
   readonly loop_delay_secs="60"
 
   while true; do
@@ -100,14 +114,16 @@ loop() {
     rm -f $dynamic $static $current $existing
     # Get list of ips in the projects we want to whitelist
     for project in $gcp_project_list; do
-      gcloud compute instances list --format=json --project=$project | get_gcp_external_ip_ranges >> $dynamic
+      gcloud compute instances list --format=json --project=$project | get_gcp_external_ips | make_ip_range >> $dynamic
     done
 
     # debug
     echo "Dynamic list of IP ranges to whitelist: "
     cat $dynamic
 
-    echo "$static_ranges" | space_sep_to_nl > $static
+    for source_listchecker in $source_listcheckers; do
+      kubectl get listcheckers.config.istio.io $source_listchecker -o json | get_listchecker_ips | make_ip_range >> $static
+    done
 
     echo "Static list of IP ranges to whitelist: "
     cat $static
@@ -118,40 +134,27 @@ loop() {
     echo "Combined sorted list of IP ranges to whitelist: "
     cat $current
 
-    # get ingresses to update
-    for ingress in $ingress_names; do
-      kubectl get ingress $ingress -o json | get_whitelist_annotation_ranges > $existing
-      echo
-      echo "Existing white list for $ingress: "
-      cat $existing
+    echo "Updating listchecker object for $dest_listchecker..."
+    cat $current | to_json_array | build_listchecker $dest_listchecker | kubectl apply -f -
 
-      # compare list of ips with existing
-      echo
-      echo "Comparing lists for $ingress: "
-      if diff $existing $current; then
-        echo "No changes in listed ips for $ingress"
-        continue
-      fi
-
-      # apply annotation to ingresses if different
-      echo "Updating ingress annotation for $ingress..."
-      kubectl patch ingress $ingress -p "$( build_annotation_patch "$(<$current)" )"
-    done
   done
 }
 
 main() {
-  set -eo pipefail; [[ "$TRACE" ]] && set -x
-
-  : "${GCP_PROJECT_IDS:?GCP_PROJECT_IDS is required}"
-  : "${INGRESS_NAMES:?INGRESS_NAMES is required}"
-
+  set -eo pipefail
   echo "Starting..."
+
+  [ -z "$GCP_PROJECT_IDS" ] && \
+  [ -z "$SOURCE_LISTCHECKER_NAMES" ] && \
+  { echo "Must set GCP_PROJECT_IDS or SOURCE_LISTCHECKER_NAMES" && exit 1; }
+  : "${DEST_LISTCHECKER_NAME:?DEST_LISTCHECKER_NAME is required}"
+
   # authenticate to google cloud
   echo "Reading google service account from /creds/auth.json"
   gcloud auth activate-service-account --key-file /creds/auth.json
 
-  loop "${STATIC_IP_RANGES:-}" "$GCP_PROJECT_IDS" "$INGRESS_NAMES"
+  loop "${SOURCE_LISTCHECKER_NAMES:-}" "${GCP_PROJECT_IDS:-}" "$DEST_LISTCHECKER_NAME"
 }
 
+[[ "$TRACE" ]] && set -x
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@"

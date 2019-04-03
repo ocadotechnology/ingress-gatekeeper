@@ -1,6 +1,6 @@
 # ingress-gatekeeper
 
-Monitors instances running in cloud accounts and whitelists them on Kubernetes nginx ingress objects
+Monitors instances running in gcp cloud accounts and manages [istio whitelist listchecker](https://medium.com/ww-engineering/istio-ip-whitelists-1633acbd4205) objects in Kubernetes, merging optional existing whitelists and GCP cloud instance ips.
 
 ## Usage
 
@@ -8,20 +8,20 @@ Environment variables to pass:
 
 `GCP_PROJECT_IDS`
 
-Space separated list of Google cloud project ids to scan for IPs.
+Space separated list of Google cloud project ids to scan for IPs. (Optional)
 
-`INGRESS_NAMES`
+`SOURCE_LISTCHECKER_NAMES`
 
-Space separated list of ingress names in the same namespace to be managed.
+Space separated list of istio listchecker objects in the same namespace to be merged or used as a base list of static ips. (Optional)
 
-`STATIC_IP_RANGES`
+`DEST_LISTCHECKER_NAME`
 
-Space separated list of IP CIDR ranges to white list (optional).
+Output istio listchecker object to be created/managed. This can then be used in your istio rule.
 
 ```
-STATIC_IP_RANGES="192.168.1.0/24 192.168.5.0/24"
+SOURCE_LISTCHECKER_NAMES="headoffice-ips remoteoffice-ips"
 GCP_PROJECT_IDS="test-project prod-project"
-INGRESS_NAMES="test-ingress"
+DEST_LISTCHECKER_NAME="test-ingress"
 ```
 
 ### Credentials
@@ -32,9 +32,13 @@ A secret named test-ingress needs to be created in the same namespace, containin
 
 use [basht](https://github.com/progrium/basht)
 
+## Older versions
+
+Note that ingress-gatekeeper version 1.x handled nginx ingress whitelisting
+
 ---
 
-Copyright © 2018 Ocado
+Copyright © 2018-2019 Ocado
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
