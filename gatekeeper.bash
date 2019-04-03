@@ -144,14 +144,21 @@ main() {
   set -eo pipefail
   echo "Starting..."
 
+  readonly authfile=/creds/auth.json
+
   [ -z "$GCP_PROJECT_IDS" ] && \
   [ -z "$SOURCE_LISTCHECKER_NAMES" ] && \
   { echo "Must set GCP_PROJECT_IDS or SOURCE_LISTCHECKER_NAMES" && exit 1; }
+  [ ! -z "$GCP_PROJECT_IDS" ] && \
+  [ ! -f $authfile ] && \
+  { echo "Must provide credentials at $authfile if GCP_PROJECT_IDS is set" && exit 1; } 
   : "${DEST_LISTCHECKER_NAME:?DEST_LISTCHECKER_NAME is required}"
 
-  # authenticate to google cloud
-  echo "Reading google service account from /creds/auth.json"
-  gcloud auth activate-service-account --key-file /creds/auth.json
+  if [ -f $authfile ]; then
+    # authenticate to google cloud
+    echo "Reading google service account from /creds/auth.json"
+    gcloud auth activate-service-account --key-file $authfile
+  fi
 
   loop "${SOURCE_LISTCHECKER_NAMES:-}" "${GCP_PROJECT_IDS:-}" "$DEST_LISTCHECKER_NAME"
 }
