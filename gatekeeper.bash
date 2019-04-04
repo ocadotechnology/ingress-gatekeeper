@@ -112,6 +112,7 @@ loop() {
     sleep $loop_delay_secs
     # cleanup
     rm -f $dynamic $static $current $existing
+    touch $dynamic
     # Get list of ips in the projects we want to whitelist
     for project in $gcp_project_list; do
       gcloud compute instances list --format=json --project=$project | get_gcp_external_ips | make_ip_range >> $dynamic
@@ -121,6 +122,7 @@ loop() {
     echo "Dynamic list of IP ranges to whitelist: "
     cat $dynamic
 
+    touch $static
     for source_listchecker in $source_listcheckers; do
       kubectl get listcheckers.config.istio.io $source_listchecker -o json | get_listchecker_ips | make_ip_range >> $static
     done
