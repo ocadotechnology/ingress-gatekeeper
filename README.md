@@ -26,7 +26,7 @@ DEST_LISTCHECKER_NAME="test-ingress"
 
 ### Credentials
 
-A secret named test-ingress needs to be created in the same namespace, containing the key `auth.json`, which value is the base64 encoded json formatted private key from a Google account with enough permissions to list instances. This secret should be mounted at the path `/creds` in the container.
+For listing GCP instances, a secret needs to be created in the same namespace, containing the key `auth.json`, which value is the base64 encoded json formatted private key from a Google account with enough permissions to list instances. This secret should be mounted at the path `/creds` in the container.
 
 ## Testing
 
