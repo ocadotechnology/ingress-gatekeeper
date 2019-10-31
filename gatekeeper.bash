@@ -7,7 +7,7 @@ get_gcp_external_ips() {
 
 get_listchecker_ips() {
   declare desc="take json output of istio listchecker and output ips"
-  jq '.spec.overrides[]' -r
+  jq '.spec.params.overrides' -r
 }
 
 make_ip_range() {
@@ -16,9 +16,9 @@ make_ip_range() {
 }
 
 build_listchecker() {
-  declare desc="create an istio listchecker whitelist object with a json list of ips"
+  declare desc="create an istio handler object from the listchecker adapter with a json list of ips"
   local listchecker_name="$1"
-  jq --arg name "$listchecker_name" '{apiVersion: "config.istio.io/v1alpha2", kind: "listchecker", metadata: {name: $name}, spec: {blacklist: false, entryType: "IP_ADDRESSES", overrides: .}}'
+  jq --arg name "$listchecker_name" '{apiVersion: "config.istio.io/v1alpha2", kind: "handler", metadata: {name: $name}, spec: {compiledAdapter: "listchecker", params: {blacklist: false, entryType: "IP_ADDRESSES", overrides: .}}}'
 }
 
 drop_invalid_ips() {
@@ -62,8 +62,7 @@ T_get_gcp_external_ips() {
 
 T_get_listchecker_ips() {
   local result="$(cat test/listchecker-ips.json | get_listchecker_ips)"
-  [[ "$result" == "104.199.71.226
-35.205.60.205" ]]
+  [[ "$result" == '["104.199.71.226","35.205.60.205"]' ]]
 }
 
 T_build_valid_ip_list() {
@@ -82,19 +81,21 @@ T_build_listchecker() {
   local result="$(echo '["foo","bar"]' | build_listchecker foobar)"
   [[ "$result" == '{
   "apiVersion": "config.istio.io/v1alpha2",
-  "kind": "listchecker",
+  "kind": "handler",
   "metadata": {
     "name": "foobar"
   },
   "spec": {
-    "blacklist": false,
-    "entryType": "IP_ADDRESSES",
-    "overrides": [
-      "foo",
-      "bar"
-    ]
-  }
-}' ]]
+    "compiledAdapter": "listchecker",
+    "params": {
+      "blacklist": false,
+      "entryType": "IP_ADDRESSES",
+      "overrides": [
+        "foo",
+        "bar"
+      ]
+    }
+}}' ]]
 }
 
 loop() {
@@ -124,7 +125,7 @@ loop() {
 
     touch $static
     for source_listchecker in $source_listcheckers; do
-      kubectl get listcheckers.config.istio.io $source_listchecker -o json | get_listchecker_ips | make_ip_range >> $static
+      kubectl get handlers.config.istio.io $source_listchecker -o json | get_listchecker_ips | make_ip_range >> $static
     done
 
     echo "Static list of IP ranges to whitelist: "
