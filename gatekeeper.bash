@@ -7,7 +7,7 @@ get_gcp_external_ips() {
 
 get_listchecker_ips() {
   declare desc="take json output of istio listchecker and output ips"
-  jq '.spec.params.overrides' -r
+  jq '.spec.params.overrides' -rc
 }
 
 make_ip_range() {
@@ -95,7 +95,8 @@ T_build_listchecker() {
         "bar"
       ]
     }
-}}' ]]
+  }
+}' ]]
 }
 
 loop() {
