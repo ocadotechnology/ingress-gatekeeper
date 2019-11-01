@@ -1,6 +1,6 @@
 # ingress-gatekeeper
 
-Monitors instances running in gcp cloud accounts and manages [istio whitelist listchecker](https://medium.com/ww-engineering/istio-ip-whitelists-1633acbd4205) objects in Kubernetes, merging optional existing whitelists and GCP cloud instance ips.
+Monitors instances running in gcp cloud accounts and manages istio whitelist handler objects in Kubernetes, merging optional existing whitelists and GCP cloud instance ips.
 
 ## Usage
 
@@ -10,18 +10,18 @@ Environment variables to pass:
 
 Space separated list of Google cloud project ids to scan for IPs. (Optional)
 
-`SOURCE_LISTCHECKER_NAMES`
+`SOURCE_HANDLER_NAMES`
 
-Space separated list of istio listchecker objects in the same namespace to be merged or used as a base list of static ips. (Optional)
+Space separated list of istio handler objects in the same namespace to be merged or used as a base list of static ips. (Optional)
 
-`DEST_LISTCHECKER_NAME`
+`DEST_HANDLER_NAME`
 
-Output istio listchecker object to be created/managed. This can then be used in your istio rule.
+Output istio handler object to be created/managed. This can then be used in your istio rule.
 
 ```
-SOURCE_LISTCHECKER_NAMES="headoffice-ips remoteoffice-ips"
+SOURCE_HANDLER_NAMES="headoffice-ips remoteoffice-ips"
 GCP_PROJECT_IDS="test-project prod-project"
-DEST_LISTCHECKER_NAME="test-ingress"
+DEST_HANDLER_NAME="test-ingress"
 ```
 
 ### Credentials
@@ -35,6 +35,8 @@ use [basht](https://github.com/progrium/basht)
 ## Older versions
 
 Note that ingress-gatekeeper version 1.x handled nginx ingress whitelisting
+
+Versions below 2.2 used listcheckers instead of handlers.
 
 ---
 

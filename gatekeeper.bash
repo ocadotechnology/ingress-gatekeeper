@@ -5,8 +5,8 @@ get_gcp_external_ips() {
   jq '.[] | .networkInterfaces[0].accessConfigs[0].natIP' -r
 }
 
-get_listchecker_ips() {
-  declare desc="take json output of istio listchecker and output ips"
+get_handler_ips() {
+  declare desc="take json output of istio handler and output ips"
   jq '.spec.params.overrides' -rc
 }
 
@@ -15,10 +15,10 @@ make_ip_range() {
   sed -e '/\/[0-9][0-9]*$/!s/$/\/32/'
 }
 
-build_listchecker() {
+build_handler() {
   declare desc="create an istio handler object from the listchecker adapter with a json list of ips"
-  local listchecker_name="$1"
-  jq --arg name "$listchecker_name" '{apiVersion: "config.istio.io/v1alpha2", kind: "handler", metadata: {name: $name}, spec: {compiledAdapter: "listchecker", params: {blacklist: false, entryType: "IP_ADDRESSES", overrides: .}}}'
+  local handler_name="$1"
+  jq --arg name "$handler_name" '{apiVersion: "config.istio.io/v1alpha2", kind: "handler", metadata: {name: $name}, spec: {compiledAdapter: "listchecker", params: {blacklist: false, entryType: "IP_ADDRESSES", overrides: .}}}'
 }
 
 drop_invalid_ips() {
@@ -60,8 +60,8 @@ T_get_gcp_external_ips() {
 35.205.60.205" ]]
 }
 
-T_get_listchecker_ips() {
-  local result="$(cat test/listchecker-ips.json | get_listchecker_ips)"
+T_get_handler_ips() {
+  local result="$(cat test/handler-ips.json | get_handler_ips)"
   [[ "$result" == '["104.199.71.226","35.205.60.205"]' ]]
 }
 
@@ -77,8 +77,8 @@ T_to_json_array() {
   [[ "$result" == '["104.199.71.226/32","35.205.60.205/32","null/32","notanip","10.0.0.0.0/24","127.0.0.1","0.0.0.0/8"]' ]]
 }
 
-T_build_listchecker() {
-  local result="$(echo '["foo","bar"]' | build_listchecker foobar)"
+T_build_handler() {
+  local result="$(echo '["foo","bar"]' | build_handler foobar)"
   [[ "$result" == '{
   "apiVersion": "config.istio.io/v1alpha2",
   "kind": "handler",
@@ -101,9 +101,9 @@ T_build_listchecker() {
 
 loop() {
 
-  local source_listcheckers="$1"
+  local source_handlers="$1"
   local gcp_project_list="$2"
-  local dest_listchecker="$3"
+  local dest_handler="$3"
 
   readonly dynamic="/tmp/dynamic"
   readonly static="/tmp/static"
@@ -125,8 +125,8 @@ loop() {
     cat $dynamic
 
     touch $static
-    for source_listchecker in $source_listcheckers; do
-      kubectl get handlers.config.istio.io $source_listchecker -o json | get_listchecker_ips | make_ip_range >> $static
+    for source_handler in $source_handlers; do
+      kubectl get handlers.config.istio.io $source_handler -o json | get_handler_ips | make_ip_range >> $static
     done
 
     echo "Static list of IP ranges to whitelist: "
@@ -138,8 +138,8 @@ loop() {
     echo "Combined sorted list of IP ranges to whitelist: "
     cat $current
 
-    echo "Updating listchecker object for $dest_listchecker..."
-    cat $current | to_json_array | build_listchecker $dest_listchecker | kubectl apply -f -
+    echo "Updating handler object for $dest_handler..."
+    cat $current | to_json_array | build_handler $dest_handler | kubectl apply -f -
 
   done
 }
@@ -151,12 +151,12 @@ main() {
   readonly authfile=/creds/auth.json
 
   [ -z "$GCP_PROJECT_IDS" ] && \
-  [ -z "$SOURCE_LISTCHECKER_NAMES" ] && \
-  { echo "Must set GCP_PROJECT_IDS or SOURCE_LISTCHECKER_NAMES" && exit 1; }
+  [ -z "$SOURCE_HANDLER_NAMES" ] && \
+  { echo "Must set GCP_PROJECT_IDS or SOURCE_HANDLER_NAMES" && exit 1; }
   [ ! -z "$GCP_PROJECT_IDS" ] && \
   [ ! -f $authfile ] && \
   { echo "Must provide credentials at $authfile if GCP_PROJECT_IDS is set" && exit 1; } 
-  : "${DEST_LISTCHECKER_NAME:?DEST_LISTCHECKER_NAME is required}"
+  : "${DEST_HANDLER_NAME:?DEST_HANDLER_NAME is required}"
 
   if [ -f $authfile ]; then
     # authenticate to google cloud
@@ -164,7 +164,7 @@ main() {
     gcloud auth activate-service-account --key-file $authfile
   fi
 
-  loop "${SOURCE_LISTCHECKER_NAMES:-}" "${GCP_PROJECT_IDS:-}" "$DEST_LISTCHECKER_NAME"
+  loop "${SOURCE_HANDLER_NAMES:-}" "${GCP_PROJECT_IDS:-}" "$DEST_HANDLER_NAME"
 }
 
 [[ "$TRACE" ]] && set -x
