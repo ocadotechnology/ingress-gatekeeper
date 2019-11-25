@@ -7,7 +7,7 @@ get_gcp_external_ips() {
 
 get_listchecker_ips() {
   declare desc="take json output of istio listchecker and output ips"
-  jq '.spec.params.overrides' -rc
+  jq '.spec.params.overrides[]' -r
 }
 
 make_ip_range() {
@@ -62,7 +62,8 @@ T_get_gcp_external_ips() {
 
 T_get_listchecker_ips() {
   local result="$(cat test/listchecker-ips.json | get_listchecker_ips)"
-  [[ "$result" == '["104.199.71.226","35.205.60.205"]' ]]
+  [[ "$result" == "104.199.71.226
+35.205.60.205" ]]
 }
 
 T_build_valid_ip_list() {
